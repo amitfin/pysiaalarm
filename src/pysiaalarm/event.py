@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, replace
 from datetime import datetime, timedelta, timezone, tzinfo
 from typing import Union, Any
 
@@ -104,7 +105,7 @@ class BaseEvent(ABC):
     def set_sia_code(self) -> None:
         """Return the SIA Code object, based on the code field."""
         if self.code:  # pragma: no cover
-            self.sia_code = SIA_CODES.get(self.code)  # pylint: disable=E1101
+            self.sia_code = copy.copy(SIA_CODES.get(self.code))  # pylint: disable=E1101
             self._sia_added = True
 
     def _get_crypter(self) -> CbcMode | None:
@@ -449,8 +450,7 @@ class SIAEvent(BaseEvent):
         for x_data in x_data_list:  # pragma: no cover
             xdata = XDATA.get(x_data[0], None)
             if xdata:
-                xdata.value = x_data[1:]
-                self.extended_data.append(xdata)
+                self.extended_data.append(replace(xdata, value=x_data[1:]))
         self._xdata_parsed = True
 
     def __str__(self) -> str:
