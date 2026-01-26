@@ -1,4 +1,9 @@
-ADM_MAPPING = {
+"""SIA XData."""
+
+from __future__ import annotations
+from typing import Final
+
+ADM_MAPPING: Final[dict[str, dict[str, str]]] = {
     "100": {"1": "MA", "3": "MH"},
     "101": {"1": "QA", "3": "QH"},
     "110": {"1": "FA", "3": "FH"},

@@ -8,7 +8,7 @@ from Crypto import Random
 from Crypto.Cipher import AES
 
 from pysiaalarm.utils import (
-    _load_sia_codes,
+    SIA_CODES,
 )
 from pysiaalarm.const import IV
 
@@ -148,11 +148,11 @@ def _get_timestamp(timed: timedelta) -> str:
 
 def _get_random_code() -> str:
     """Get a random code from all codes."""
-    codes = [code for code in _load_sia_codes()]
+    codes = [code for code in SIA_CODES]
     return random.choice(codes)
 
 
 def _get_fixed_code() -> str:
     """Pick a stable code from the known code list for deterministic tests."""
-    codes = sorted(_load_sia_codes())
+    codes = sorted(SIA_CODES)
     return codes[0]

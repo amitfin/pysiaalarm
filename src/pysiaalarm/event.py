@@ -1,10 +1,12 @@
 """This is a class for SIA Events."""
+
 from __future__ import annotations
 
+import copy
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, replace
 from datetime import datetime, timedelta, timezone, tzinfo
 from typing import Union, Any
 
@@ -15,16 +17,16 @@ from .account import SIAAccount
 from .const import IV, RSP_XDATA
 from .errors import EventFormatError, NoAccountError
 from .utils import (
+    ADM_MAPPING,
     MAIN_MATCHER,
     OH_MATCHER,
     MessageTypes,
     ResponseType,
+    SIA_CODES,
     SIACode,
     SIAXData,
+    XDATA,
     _get_matcher,
-    _load_adm_mapping,
-    _load_sia_codes,
-    _load_xdata,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -103,7 +105,7 @@ class BaseEvent(ABC):
     def set_sia_code(self) -> None:
         """Return the SIA Code object, based on the code field."""
         if self.code:  # pragma: no cover
-            self.sia_code = _load_sia_codes().get(self.code)  # pylint: disable=E1101
+            self.sia_code = copy.copy(SIA_CODES.get(self.code))  # pylint: disable=E1101
             self._sia_added = True
 
     def _get_crypter(self) -> CbcMode | None:
@@ -351,7 +353,7 @@ class SIAEvent(BaseEvent):
             res = f'"{response_type.value}"{self.sequence}{self.receiver}{self.line}#{self.account}[{self.sia_account.response_qualifier}]{x_data if x_data else ""}'
         else:
             encrypted_content = self.encrypt_content(
-                f']{x_data if x_data else ""}{self._get_timestamp(self.sia_account.device_timezone)}'
+                f"]{x_data if x_data else ''}{self._get_timestamp(self.sia_account.device_timezone)}"
             )
             res = f'"*{response_type.value}"{self.sequence}{self.receiver}{self.line}#{self.account}[{self.sia_account.response_qualifier}{encrypted_content}'
         header = ("%04x" % len(res)).upper()
@@ -389,7 +391,7 @@ class SIAEvent(BaseEvent):
     def parse_adm(self) -> None:
         """Parse the event qualifier and type for ADM messages."""
         if self.event_qualifier and self.event_type:  # pragma: no cover
-            if sub_map := _load_adm_mapping().get(self.event_type, None):
+            if sub_map := ADM_MAPPING.get(self.event_type, None):
                 self.code = sub_map.get(self.event_qualifier, "YN")
             else:
                 self.code = "YN"  # invalid data
@@ -446,10 +448,9 @@ class SIAEvent(BaseEvent):
         x_data_list = self.x_data.split("][")
         self.extended_data = []
         for x_data in x_data_list:  # pragma: no cover
-            xdata = _load_xdata().get(x_data[0], None)
+            xdata = XDATA.get(x_data[0], None)
             if xdata:
-                xdata.value = x_data[1:]
-                self.extended_data.append(xdata)
+                self.extended_data.append(replace(xdata, value=x_data[1:]))
         self._xdata_parsed = True
 
     def __str__(self) -> str:
