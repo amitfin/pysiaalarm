@@ -133,7 +133,7 @@ class SIAClientTCP(SIAClient):
     async def async_stop(self) -> None:
         """Stop the asynchronous SIA TCP server."""
         _LOGGER.debug("Stopping SIA.")
-        if self.server is None:
+        if self.server is None or self.sia_server.shutdown_flag:
             return
         self.sia_server.shutdown_flag = True
         self.server.close()
